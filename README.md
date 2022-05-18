@@ -1,0 +1,1 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/kfvvpofgxich1qcd?svg=true)](https://ci.appveyor.com/project/costya74/change-data-delivery)

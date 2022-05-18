@@ -1,8 +1,13 @@
 package ru.netology;
 
+import com.codeborne.selenide.Condition;
+import com.codeborne.selenide.Configuration;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.Keys;
 
+import java.time.Duration;
+
+import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.*;
 import static com.codeborne.selenide.Selenide.$;
@@ -10,20 +15,36 @@ import static com.codeborne.selenide.Selenide.$;
 public class DataGeneratorTest {
     @Test
     void shouldCheckDeliveryDate() {
-        open("http://localhost:9999/");
-        $("[data-test-id=city] input").setValue(DataGenerator.generateCity("ru"));
-        $("[data-test-id=date] input").doubleClick().sendKeys(Keys.BACK_SPACE);
-        $("[data-test-id=date] input").setValue(DataGenerator.generateDate(3));
-        $("[data-test-id=name] input").setValue(DataGenerator.generateName("ru"));
-        $("[data-test-id=phone] input").setValue(DataGenerator.generatePhone("ru"));
-        $("[data-test-id=agreement]").click();
-        $$("button").find(exactText("Запланировать")).click();
-        $("div.notification__content").shouldBe(visible, exactText("Встреча успешно запланирована на " + DataGenerator.generateDate(3)));
-        $("[data-test-id=date] input").doubleClick().sendKeys(Keys.BACK_SPACE);
-        $("[data-test-id=date] input").setValue(DataGenerator.generateDate(6));
-        $$("button").find(exactText("Запланировать")).click();
-        $("[data-test-id='replan-notification']").shouldBe(visible);
-        $$("button").find(exactText("Перепланировать")).click();
-        $("div.notification__content").shouldBe(visible, exactText("Встреча успешно запланирована на " + DataGenerator.generateDate(6)));
+        Configuration.holdBrowserOpen = true;   // чтобы браузер не закрывался
+        open("http://localhost:9999"); // открытие страницы
+        DataGenerator.UserInfo userInfo = DataGenerator.Registration.generateUser("Ru");
+
+        //Заполнение и первоначальная отправка формы:
+        $("[data-test-id='city'] input").setValue(userInfo.getCity());
+        $("[data-test-id='name'] input").setValue(userInfo.getName());
+        $("[data-test-id='date'] input").sendKeys(Keys.chord(Keys.SHIFT, Keys.HOME), Keys.BACK_SPACE);
+        String scheduledDate = DataGenerator.generateDate(5);
+        $("[data-test-id='date'] input").setValue(scheduledDate);
+        $("[data-test-id='phone'] input").setValue(userInfo.getPhone());
+        $("[data-test-id='agreement']").click();
+        $(byText("Запланировать")).click();
+        $(".notification__content")
+                .shouldHave(Condition.text("Встреча успешно запланирована на " + scheduledDate), Duration.ofSeconds(15));
+
+        //Изменение ранее введенной даты и отправка формы:
+        $("[data-test-id='date'] input").sendKeys(Keys.chord(Keys.SHIFT, Keys.HOME), Keys.BACK_SPACE);
+        String shiftDate = DataGenerator.generateDate(12);
+        $("[data-test-id='date'] input").setValue(shiftDate);
+        $(byText("Запланировать")).click();
+
+        //Взаимодействие с опцией перепланировки,
+        //содержание текста и время загрузки:
+        $("[data-test-id= replan-notification]")
+                .shouldHave(Condition.text("Необходимо подтверждение " +
+                        "У вас уже запланирована встреча на другую дату. Перепланировать?"), Duration.ofSeconds(15));
+        $("[data-test-id=replan-notification] .button")
+                .shouldHave(Condition.text("Перепланировать")).click();
+        $(".notification__content")
+                .shouldHave(Condition.text("Встреча успешно запланирована на " + shiftDate), Duration.ofSeconds(15));
     }
 }

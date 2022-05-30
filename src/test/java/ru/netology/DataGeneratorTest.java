@@ -17,6 +17,7 @@ public class DataGeneratorTest {
     static void setUpAll() {
         SelenideLogger.addListener("allure", new AllureSelenide());
     }
+
     @AfterAll
     static void tearDownAll() {
         SelenideLogger.removeListener("allure");
@@ -35,10 +36,10 @@ public class DataGeneratorTest {
         $$("button").find(exactText("Запланировать")).click();
         $("div.notification__content").shouldBe(visible, exactText("Встреча успешно запланирована на " + DataGenerator.generateDate(3)));
         $("[data-test-id=date] input").doubleClick().sendKeys(Keys.BACK_SPACE);
-        $("[data-test-id=date] input").setValue(DataGenerator.generateDate(6));
+        $("[data-test-id=date] input").setValue(DataGenerator.generateDate(10));
         $$("button").find(exactText("Запланировать")).click();
         $("[data-test-id='replan-notification']").shouldBe(visible);
         $$("button").find(exactText("Перепланировать")).click();
-        $("div.notification__content").shouldBe(visible, exactText("Встреча успешно запланирована на " + DataGenerator.generateDate(6)));
+        $("div.notification__content").shouldBe(visible, exactText("Встреча успешно запланирована на " + DataGenerator.generateDate(10)));
     }
 }
